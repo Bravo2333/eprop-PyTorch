@@ -125,7 +125,7 @@ def setup(args):
         
     print("Training set length: "+str(args.full_train_len))
     print("Test set length: "+str(args.full_test_len))
-    
+    print(device)
     return (device, train_loader, traintest_loader, test_loader)
 
 

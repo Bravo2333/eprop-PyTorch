@@ -39,6 +39,22 @@ import torch.optim as optim
 import models
 
 
+def prepare_targets(label, args, device):
+    # SpeechCommands is always a classification task
+    args.classif = True
+
+    # Convert label to one-hot encoding
+    targets = torch.zeros(label.shape[0], args.n_classes, device=device)
+    targets.scatter_(1, label.unsqueeze(1), 1.0)
+
+    # Expand the targets to match the time dimension of the input
+    targets = targets.unsqueeze(1).expand(-1, args.n_steps, -1)
+
+    # Permute to (time_steps, batch_size, n_classes)
+    targets = targets.permute(1, 0, 2)
+
+    return targets
+
 def train(args, device, train_loader, traintest_loader, test_loader):
     torch.manual_seed(42)
     
@@ -119,12 +135,12 @@ def do_epoch(args, do_training, model, device, loader, optimizer, loss_fct, benc
         
         # For each batch
         for batch_idx, (data, label) in enumerate(loader):
-
             data, label = data.to(device), label.to(device)
-            if args.classif:    # Do a one-hot encoding for classification
-                targets = torch.zeros(label.shape, device=device).unsqueeze(-1).expand(-1,-1,args.n_classes).scatter(2, label.unsqueeze(-1), 1.0).permute(1,0,2)
-            else:
-                targets = label.permute(1,0,2)
+            # if args.classif:    # Do a one-hot encoding for classification
+            #     targets = torch.zeros(label.shape, device=device).unsqueeze(-1).expand(-1,-1,args.n_classes).scatter(2, label.unsqueeze(-1), 1.0).permute(1,0,2)
+            # else:
+            #     targets = label.permute(1,0,2)
+            targets = prepare_targets(label, args, device)
 
             # Evaluate the model for all the time steps of the input data, then either do the weight updates on a per-timestep basis, or on a per-sample basis (sum of all per-timestep updates).
             optimizer.zero_grad()
@@ -143,15 +159,17 @@ def do_epoch(args, do_training, model, device, loader, optimizer, loss_fct, benc
                     score += torch.sum(torch.eq(inference,label[:,0]))
                 else:
                     inference = torch.argmax(torch.sum(output,axis=0),axis=1)
-                    score += torch.sum(torch.eq(inference,label[:,0]))
-        
+                    # print("inference shape:", inference.shape)
+                    # print("label shape:", label.shape)
+                    score += torch.sum(torch.eq(inference,label))
+                    # score += torch.sum(torch.eq(inference,label[:,0]))
+
     if benchType == "train" and do_training:
         info = "on training set (while training): "
     elif benchType == "train":
         info = "on training set                 : "
     elif benchType == "test":
         info = "on test set                     : "
-
     if args.classif:
         print("\t\t Score "+info+str(score.item())+'/'+str(length)+' ('+str(score.item()/length*100)+'%), loss: '+str(loss.item()))
     else:

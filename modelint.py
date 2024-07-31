@@ -20,14 +20,14 @@ limitations under the License.
 ------------------------------------------------------------------------------
 
  "models.py" - Spiking RNN network model embedding hardcoded e-prop training procedures.
- 
+
  Project: PyTorch e-prop
 
  Author:  C. Frenkel, Institute of Neuroinformatics, University of Zurich and ETH Zurich
 
- Cite this code: BibTeX/APA citation formats auto-converted from the CITATION.cff file in the repository are available 
+ Cite this code: BibTeX/APA citation formats auto-converted from the CITATION.cff file in the repository are available
        through the "Cite this repository" link in the root GitHub repo https://github.com/ChFrenkel/eprop-PyTorch/
-       
+
 ------------------------------------------------------------------------------
 """
 
@@ -109,7 +109,9 @@ class SRNN(nn.Module):
 
             # Forward pass - Hidden state:  v: recurrent layer membrane potential
             #                Visible state: z: recurrent layer spike output, vo: output layer membrane potential (yo incl. activation function)
-            self.v[t + 1] = (self.alpha * self.v[t] + torch.mm(self.z[t], self.w_rec.t()) + torch.mm(x[t],self.w_in.t())) - self.z[t] * self.thr
+            self.v[t + 1] = (self.alpha * self.v[t] + torch.mm(self.z[t], self.w_rec.t()) + torch.mm(x[t],
+                                                                                                     self.w_in.t())) - \
+                            self.z[t] * self.thr
             self.z[t + 1] = (self.v[t + 1] > self.thr).float()
             self.vo[t + 1] = self.kappa * self.vo[t] + torch.mm(self.z[t + 1], self.w_out.t()) + self.b_o
 
