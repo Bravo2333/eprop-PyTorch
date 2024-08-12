@@ -8,13 +8,15 @@ import numpy as np
 class SpeechCommandsDataset(torch.utils.data.Dataset):
     def __init__(self, args, split='train'):
         self.dt = 1e-3  # 1ms time step
-        self.n_mels = 40  # Number of Mel frequency bins
+        # self.n_mels = 40  # Number of Mel frequency bins
+        self.n_mels = 128  # Number of Mel frequency bins
 
         # 加载完整的 SpeechCommands 数据集
         self.full_dataset = torchaudio.datasets.SPEECHCOMMANDS('./', download=True)
 
         # 数字命令类别
         numeric_commands = {'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'}
+        # numeric_commands = {'zero', 'one', 'two', 'three', 'four'}
 
         # 筛选出数字命令类别的数据
         filtered_dataset = [item for item in self.full_dataset if item[2] in numeric_commands]
@@ -88,7 +90,7 @@ def setup(args):
     print("Training set length: " + str(args.full_train_len))
     print("Test set length: " + str(args.full_test_len))
 
-    return (device, train_loader, traintest_loader, test_loader)
+    return device, train_loader, traintest_loader, test_loader
 
 
 def load_dataset_speechcommands(args, kwargs):
@@ -109,4 +111,4 @@ def load_dataset_speechcommands(args, kwargs):
     args.delay_targets = 0  # No delay in targets for speech commands
     args.skip_test = False
 
-    return (train_loader, traintest_loader, test_loader)
+    return train_loader, traintest_loader, test_loader
